@@ -105,8 +105,8 @@ with a UNION binding them. */
 WITH SalesByDate AS (
     SELECT 
         market_date, 
-        SUM(sales_amount) AS total_sales
-    FROM sales
+        SUM(quantity) AS total_sales
+    FROM customer_purchases
     GROUP BY market_date
 ),
 RankedSales AS (
@@ -140,18 +140,19 @@ Before your final group by you should have the product of those two queries (x*y
 
 WITH VendorProduct AS (
     SELECT 
-        vendor_name, 
-        product_name, 
-        price
-    FROM vendor_inventory
+        vi.vendor_id, 
+        vi.product_id, 
+        vi.original_price
+    FROM vendor_inventory vi
 ),
 CustomerCount AS (
-    SELECT COUNT(*) AS total_customers FROM customers
+    SELECT COUNT(*) AS total_customers 
+    FROM customer
 )
 SELECT 
-    vp.vendor_name, 
-    vp.product_name, 
-    (vp.price * cc.total_customers * 5) AS total_revenue
+    vp.vendor_id, 
+    vp.product_id, 
+    (vp.original_price * cc.total_customers * 5) AS total_revenue
 FROM VendorProduct vp
 CROSS JOIN CustomerCount cc;
 
@@ -171,9 +172,11 @@ WHERE product_qty_type = 'unit';
 /*2. Using `INSERT`, add a new row to the product_units table (with an updated timestamp). 
 This can be any product you desire (e.g. add another record for Apple Pie). */
 
-INSERT INTO product_units 
-SELECT 
-    'New Product', 'Medium', 'unit', CURRENT_TIMESTAMP;
+INSERT INTO product_units (product_name, product_qty_type, snapshot_timestamp)
+VALUES ('Apple Pie', 'unit', CURRENT_TIMESTAMP);
+
+
+
 
 -- DELETE
 /* 1. Delete the older record for the whatever product you added. 
@@ -201,26 +204,18 @@ Finally, make sure you have a WHERE statement to update the right row,
 	you'll need to use product_units.product_id to refer to the correct row within the product_units table. 
 When you have all of these components, you can run the update statement. */
 
-ALTER TABLE product_units
-ADD current_quantity INT;
 
-WITH LastQuantity AS (
-    SELECT 
-        product_id, 
-        COALESCE(MAX(quantity), 0) AS last_quantity
+
+
+PRAGMA table_info(product_units); -- This shows the schema of product_units for manual verification
+
+
+UPDATE product_units
+SET current_quantity = COALESCE((
+    SELECT MAX(quantity)
     FROM vendor_inventory
-    GROUP BY product_id
-)
-UPDATE product_units pu
-SET current_quantity = (
-    SELECT lq.last_quantity
-    FROM LastQuantity lq
-    WHERE lq.product_id = pu.product_id
-)
-WHERE EXISTS (
-    SELECT 1 
-    FROM LastQuantity lq 
-    WHERE lq.product_id = pu.product_id
-);
+    WHERE vendor_inventory.product_id = product_units.product_id
+), 0);
 
-
+--  Verify the Updated Table
+SELECT * FROM product_units;
