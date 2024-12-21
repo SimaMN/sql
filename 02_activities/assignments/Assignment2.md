@@ -54,7 +54,47 @@ The store wants to keep customer addresses. Propose two architectures for the CU
 **HINT:** search type 1 vs type 2 slowly changing dimensions. 
 
 ```
-Your answer...
+Type 1 Architecture: Overwriting Changes
+Only keeps the current address.
+Table Design:
+
+CUSTOMER_ADDRESS
+---------------------
+Customer_ID (PK)
+Address_Line1
+Address_Line2
+City
+State
+Postal_Code
+Country
+
+
+Type 2 Architecture: Retaining Changes
+Keeps a history of all addresses.
+Table Design:
+
+CUSTOMER_ADDRESS_HISTORY
+-------------------------
+Address_ID (PK)
+Customer_ID (FK)
+Address_Line1
+Address_Line2
+City
+State
+Postal_Code
+Country
+Start_Date
+End_Date (NULL if current)
+
+
+
+| Feature                          | Type 1 (Overwrite)                  | Type 2 (Retain History)             |
+|----------------------------------|-------------------------------------|-------------------------------------|
+| Tracks history of addresses?     | No                                  | Yes                                 |
+| Table complexity                 | Simple                              | More complex                        |
+| Storage requirements             | Low                                 | Medium to High                      |
+| Use case                         | No need for historical data         | Need to track address changes       |
+
 ```
 
 ***
