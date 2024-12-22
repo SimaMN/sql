@@ -205,7 +205,7 @@ Finally, make sure you have a WHERE statement to update the right row,
 When you have all of these components, you can run the update statement. */
 
 
-PRAGMA table_info(product_units); -- Optional step to verify schema
+PRAGMA table_info(product_units); 
 
 ALTER TABLE product_units ADD COLUMN current_quantity INT DEFAULT 0;
 
