@@ -205,17 +205,18 @@ Finally, make sure you have a WHERE statement to update the right row,
 When you have all of these components, you can run the update statement. */
 
 
+PRAGMA table_info(product_units); -- Optional step to verify schema
 
-
-PRAGMA table_info(product_units); -- This shows the schema of product_units for manual verification
-
+ALTER TABLE product_units ADD COLUMN current_quantity INT DEFAULT 0;
 
 UPDATE product_units
-SET current_quantity = COALESCE((
-    SELECT MAX(quantity)
+SET current_quantity = (
+    SELECT COALESCE(MAX(quantity), 0) -- Get the maximum quantity or 0 if no match
     FROM vendor_inventory
     WHERE vendor_inventory.product_id = product_units.product_id
-), 0);
+)
+WHERE product_units.product_id IN (
+    SELECT DISTINCT product_id FROM vendor_inventory
+);
 
---  Verify the Updated Table
 SELECT * FROM product_units;
